@@ -19,13 +19,36 @@
 
 namespace sjtu {
 class int2048 {
-  // todo
+  // Storage: little-endian limbs in base 1e9, plus a sign flag.
+  // sign == false  -> value >= 0
+  // sign == true   -> value < 0
+  // The value 0 is always stored with sign == false and an empty limb vector.
+private:
+  static const unsigned int BASE = 1000000000u; // 1e9
+  static const int WIDTH = 9;
+  bool sign;
+  std::vector<unsigned int> d; // limbs, little-endian; empty == 0
+
+  // ---- internal helpers ----
+  void trim();                       // remove leading zero limbs, fix sign for 0
+  bool is_zero() const;              // true iff value == 0
+  int cmp_abs(const int2048 &) const; // -1/0/1 comparing |*this| vs |rhs|
+  static int2048 add_abs(const int2048 &, const int2048 &); // |a|+|b|, sign+
+  static int2048 sub_abs(const int2048 &, const int2048 &); // |a|-|b|, a>=b
+  static int2048 mul_abs(const int2048 &, const int2048 &); // |a|*|b|, sign+
+  // magnitude division: q = |a|/|b|, r = |a|%|b|, 0 <= r < |b|
+  static void divmod_abs(const int2048 &a, const int2048 &b,
+                         int2048 &q, int2048 &r);
+
 public:
   // Constructors
   int2048();
   int2048(long long);
   int2048(const std::string &);
   int2048(const int2048 &);
+  // move constructor / assignment (added for efficiency, compatible)
+  int2048(int2048 &&) noexcept;
+  int2048 &operator=(int2048 &&) noexcept;
 
   // The parameter types of the following functions are for reference only, you can choose to use constant references or not
   // If needed, you can add other required functions yourself
